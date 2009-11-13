@@ -34,12 +34,14 @@ class NotificationsRobot(robot.Robot):
         Here we do two things: check for commands, and markup new
         blips."""
         blip = context.GetBlipById(event['blipId'])
-        text = blip.GetDocument().GetText().lower()
+        text = blip.GetDocument().GetText()
         logging.debug("Matching text: %s" % str(text))
         m = re.match("^My nick is (.*)$", text, re.I)
         if m:
+            newnick = m.group(1).strip()
+            self.delete_nick(newnick)
             user = SdmbUser(address=blip.creator,
-                            nick=m.group(1).strip())
+                            nick=newnick)
             logging.debug("Creating new SdmbUser: %s" % str(user));
             user.put()
         nick = self.lookup(blip.creator)
@@ -49,6 +51,17 @@ class NotificationsRobot(robot.Robot):
             blip = context.GetBlipById(event['blipId'])
             blip.GetDocument().SetText("[%s]: %s" %
                                        (nick, blip.GetDocument().GetText()))
+
+    def delete_nick(self, nick):
+        """Delete the entry with the passed in nick."""
+
+        query = SdmbUser.all()
+        query.filter("nick = ", nick)
+        results = query.fetch(1)
+        if len(results) > 0:
+            logging.debug("Deleting entry: %s" % results[0])
+            results[0].delete()
+
 
     def lookup(self, wave_user):
         """Lookup the nick of the wave user passed in.
