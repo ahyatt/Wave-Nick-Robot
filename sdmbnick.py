@@ -35,6 +35,8 @@ class NotificationsRobot(robot.Robot):
         blips."""
         blip = context.GetBlipById(event['blipId'])
         text = blip.GetDocument().GetText()
+        if text[0] == "[":
+            return
         logging.debug("Matching text: %s" % str(text))
         m = re.match("^My nick is (.*)$", text, re.I)
         if m:
